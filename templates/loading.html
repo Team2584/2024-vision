@@ -3,9 +3,50 @@
 {% block title %} Raspi Web Interface {% endblock %}
 
 {% block body %}
+
+<style>
+    #container {
+        margin: 20px;
+        width: 400px;
+        height: 8px;
+        position: relative;
+    }
+</style>
 <div class="container ms-1">
+<br><br>
 <h1>Raspi Web Interface</h1>
+<br>
+<h2>Loading</h2>
+<div class="progress-container">
+    <div class="progress" style="height: 20px;">
+        <div class="progress-bar bg-primary" role="progressbar"
+            style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+    </div>
+    <br>
+    <div class="progress-label" style="text-align: center;">0%</div>
+</div>
 
-<h2>Loading . . .</h2>
+  <script>
+    $(document).ready(function () {
+        let progressContainer = $(".progress-container");
+        let progressBar = progressContainer.find(".progress-bar");
+        let progressLabel = progressContainer.find(".progress-label");
 
+        let targetWidth = 100;
+        let delayTime = 6000; // in milliseconds
+
+        progressBar.animate({
+            width: targetWidth + "%"
+        }, {
+            duration: delayTime,
+            step: function (now) {
+                let percentage = Math.round((now / targetWidth) * 100);
+                progressLabel.text(percentage + "%");
+            },
+            complete: function () {
+                progressLabel.text("100%");
+            }
+        });
+    });
+</script>
 {% endblock %}

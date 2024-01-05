@@ -33,20 +33,20 @@ def tune():
     set_mode("tune")
     return render_template("tune-select.html", mode = get_mode(), ip = ip_addr);
 
-@app.route("/loading")
-def loading_home():
-    set_mode("run")
-    return render_template("loading.html"), {"Refresh": f"{delay_time}; url=http://{ip_addr}:{port}/"}
-
-@app.route("/loading/restart")
-def loading_restart():
-    set_mode("restart")
-    return render_template("loading.html"), {"Refresh": f"{delay_time}; url=http://{ip_addr}:{port}/"}
-
-@app.route("/loading/<page1>/<page2>")
-def loading_tune(page1, page2):
-    set_mode("tune")
-    return render_template("loading.html"), {"Refresh": f"{delay_time}; url=http://{ip_addr}:{port}/{page1}/{page2}"}
+@app.route("/loading/<page>")
+def loading_tune(page):
+    if (page == "restart"):
+        set_mode("restart")
+        return render_template("loading.html"), {"Refresh": f"{delay_time}; url=http://{ip_addr}:{port}/"}
+    elif (page == "tune-cone"):
+        set_mode("tune")
+        return render_template("loading.html"), {"Refresh": f"{delay_time}; url=http://{ip_addr}:{port}/tune/cone"}
+    elif (page == "tune-cube"):
+        set_mode("tune")
+        return render_template("loading.html"), {"Refresh": f"{delay_time}; url=http://{ip_addr}:{port}/tune/cube"}
+    else:
+        set_mode("run")
+        return render_template("loading.html"), {"Refresh": f"{delay_time}; url=http://{ip_addr}:{port}/"}
 
 @app.route("/tune/<page>")
 def cones_or_cubes(page):

@@ -1,0 +1,18 @@
+{% extends "layout.html" %}
+
+{% block title %} Jetson Web Interface {% endblock %}
+
+{% block body %}
+<div class="container ms-1">
+<h1>Jetson Web Interface</h1>
+
+<img class="rounded img-fluid" src="http://{{ip}}:5802/colorFrame" />
+<img class="rounded img-fluid" src="http://{{ip}}:5802/tagCam" />
+
+<br/>
+<br/>
+
+<a class="btn btn-primary" href="{{url_for("tune")}}">Tune Vision Params</a>
+<a class="btn btn-danger" href="/loading/restart">Restart Code</a>
+</div>
+{% endblock %}

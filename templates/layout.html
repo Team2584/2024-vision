@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+      rel="stylesheet"
+      href="{{url_for('static', filename='nouislider.min.css')}}"
+    />
+    <script src="{{url_for('static', filename='nouislider.js')}}"></script>
+    <script src="{{url_for('static', filename='wNumb.js')}}"></script>
+
+    <script src="{{url_for('static', filename='bootstrap.min.js')}}"></script>
+    <link
+      rel="stylesheet"
+      href="{{url_for('static', filename='bootstrap.min.css')}}"
+    />
+
+    <title>{% block title %}{% endblock %}</title>
+  </head>
+
+  <body>
+    {% block body %} {% endblock %}
+    <br>
+    <div class="ms-2">Current Jetson Mode: {{mode}}</div>
+  </body>
+</html>

@@ -18,7 +18,7 @@ tune ()
     pgrep "tune" || build/tune & 
 }
 
-cd /home/patriotrobotics/Documents/FRCCode/2023-vision
+cd /home/patriotrobotics/Documents/FRCCode/2024-vision
 
 while true
 do

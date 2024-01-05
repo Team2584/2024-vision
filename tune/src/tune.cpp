@@ -76,7 +76,6 @@ int main(void)
         {
             if (coneFile)
                 getline(coneFile, line);
-            cout << line << endl;
             if (line != "")
                 coneParams.push_back(stoi(line));
         }
@@ -101,7 +100,6 @@ int main(void)
         {
             if (coneFile)
                 getline(cubeFile, line);
-            cout << line << endl;
             if (line != "")
                 cubeParams.push_back(stoi(line));
         }

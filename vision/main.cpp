@@ -1,9 +1,7 @@
 #include "main.h"
 #include "Cameras.h"
-#include "detection.h"
 #include "globals.h"
 #include "graphics_helpers.h"
-#include "pose_estimation.h"
 
 using namespace std;
 using namespace cv;
@@ -224,11 +222,10 @@ int main()
                 chrono::steady_clock::now() - loop_start);
             if (loop_time.count() < 10)
                 this_thread::sleep_for(chrono::milliseconds(10 - loop_time.count()));
+	}
+        streamer.stop();
 
-            streamer.stop();
-
-            return 0;
-        }
+        return 0;
 }
 
  // Return time elapsed since passed time_point in microseconds

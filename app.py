@@ -3,7 +3,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 import subprocess
 import time
 
-ip_addr = "10.25.84.12"
+ip_addr = "10.7.2.72"
 port = "5801"
 delay_time = 6
 

@@ -9,9 +9,6 @@ using namespace std;
 using namespace cv;
 using mjpgs = nadjieb::MJPEGStreamer;
 
-int total_hamm_hist[HAMM_HIST_MAX];
-int hamm_hist[HAMM_HIST_MAX];
-
 int cone_min_hue;
 int cone_max_hue;
 int cone_min_sat;
@@ -32,25 +29,6 @@ bool has_tagCam = false;
 int main()
 {
     /**********************************************************************************************
-     * AprilTags Setup *
-     *******************/
-
-    // Initialize tag detector with options
-    apriltag_family_t *tf = NULL;
-    tf = tag16h5_create();
-
-    apriltag_detector_t *td = apriltag_detector_create();
-    apriltag_detector_add_family_bits(td, tf, HAMMING_NUMBER);
-
-    td->quad_decimate = QUAD_DECIMATE;
-    td->quad_sigma = QUAD_SIGMA;
-    td->nthreads = NTHREADS;
-    td->debug = APRIL_DEBUG;
-    td->refine_edges = REFINE_EDGES;
-
-    memset(total_hamm_hist, 0, sizeof(int) * HAMM_HIST_MAX);
-
-    /**********************************************************************************************
      * Network Tables Setup *
      ************************/
 
@@ -65,7 +43,6 @@ int main()
 
     // Create tables
     shared_ptr<nt::NetworkTable> visionTbl = nt_inst.GetTable("vision");
-// Same deal for flir
 
     // Make a sanity check topic and an entry to publish/read from it; set initial
     // value
@@ -78,23 +55,11 @@ int main()
     nt::BooleanSubscriber connectedSub = connectedTopic.Subscribe(false);
 
     // Other vision topics
-    nt::DoubleArrayTopic cube_tag_Topic = visionTbl->GetDoubleArrayTopic("cubeTag");
-    nt::DoubleArrayEntry cube_tag_Entry = cube_tag_Topic.GetEntry({});
-
-    nt::DoubleArrayTopic substation_tag_Topic = visionTbl->GetDoubleArrayTopic("substationTag");
-    nt::DoubleArrayEntry substation_tag_Entry = substation_tag_Topic.GetEntry({});
-
     nt::BooleanTopic see_cones_Topic = visionTbl->GetBooleanTopic("seeCones");
     nt::BooleanSubscriber see_cones_Sub = see_cones_Topic.Subscribe({true});
 
     nt::BooleanTopic see_cubes_Topic = visionTbl->GetBooleanTopic("seeCubes");
     nt::BooleanSubscriber see_cubes_Sub = see_cubes_Topic.Subscribe({true});
-
-    nt::BooleanTopic see_cube_tags_Topic = visionTbl->GetBooleanTopic("seeCubeTags");
-    nt::BooleanSubscriber see_cube_tags_Sub = see_cube_tags_Topic.Subscribe({true});
-
-    nt::BooleanTopic see_substation_tags_Topic = visionTbl->GetBooleanTopic("seeSubstationTags");
-    nt::BooleanSubscriber see_substation_tags_Sub = see_substation_tags_Topic.Subscribe({true});
 
     nt::BooleanTopic in_match_Topic = visionTbl->GetBooleanTopic("inMatch");
     nt::BooleanSubscriber in_match_Sub = in_match_Topic.Subscribe({false});
@@ -104,12 +69,6 @@ int main()
 
     nt::DoubleArrayTopic cube_pos_Topic = visionTbl->GetDoubleArrayTopic("cubePos");
     nt::DoubleArrayPublisher cube_pos_Pub = cube_pos_Topic.Publish();
-
-    nt::DoubleArrayTopic pole_pos_Topic = visionTbl->GetDoubleArrayTopic("polePos");
-    nt::DoubleArrayPublisher pole_pos_Pub = pole_pos_Topic.Publish();
-
-    nt::BooleanTopic has_cone_Topic = visionTbl->GetBooleanTopic("hasCone");
-    nt::BooleanEntry has_cone_Entry = has_cone_Topic.GetEntry({true});
 
     /**********************************************************************************************
      * Camera & Stream Setup *
@@ -133,48 +92,21 @@ int main()
     }
     */
 
-    if (has_depth)
-    {
-        depth.setPosOffset(1 / INCH, 5 / INCH, 23.5 / INCH, 0, -0.349);
-        // Red camera settings
-        depth.setCamParams(599, 600, 334, 236);
-    }
+    // Position of Camera on Robot
+    depth.setPosOffset(1 / INCH, 5 / INCH, 23.5 / INCH, 0, -0.349);
+    // Red camera settings
+    depth.setCamParams(599, 600, 334, 236);
 
-    // depthCamera *tagCam;
-    /*
-    try
-    {
-        depthCamera tagCam(DEPTH_BLUE, 640, 480, 60);
-        // tagCam = &tagCam_obj;
-    }
-    catch (const rs2::error &err)
-    {
-        if (!in_match_Sub.Get())
-        {
-            return (7);
-        }
-        cout << "RS2 ERROR CAUGHT: " << err.what() << endl;
-        has_tagCam = false;
-    }
-    */
+    // Start steam on port 5802
+    vector<int> params = {IMWRITE_JPEG_QUALITY, 80};
+    mjpgs streamer;
+    streamer.start(5802);
 
-#ifdef hasTagCam
-    {
-        tagCam.setPosOffset(1 / INCH, -2 / INCH, 23.5 / INCH, 0, -0.349);
-        tagCam.setCamParams(608, 608, 323, 245);
-        tagCam.setDistCoeffs(0.09116903370720442, 0.2567349843314421, -0.003936586357063021,
-                             0.001658039412119442, -1.633408316803933);
-#endif
-
-        vector<int> params = {IMWRITE_JPEG_QUALITY, 80};
-        mjpgs streamer;
-        streamer.start(5802);
-
-        /**********************************************************************************************
-         * GET FILTER PARAMETERS *
-         *************************/
-        vector<int> coneParams;
-        vector<int> cubeParams;
+    /**********************************************************************************************
+    * GET FILTER PARAMETERS FROM FILE *
+    *************************/
+    vector<int> coneParams;
+    vector<int> cubeParams;
 
         string line;
         ifstream coneFile("/home/patriotrobotics/Documents/FRCCode/2024-vision/cone-params.txt");
@@ -229,7 +161,6 @@ int main()
          * THE LOOP *
          ************/
         int counter = 2;
-        double poseNum = 0;
         double coneNum = 0;
 
         while (true)
@@ -245,78 +176,12 @@ int main()
                 nt_inst.SetServer("host", NT_DEFAULT_PORT4);
             }
 
-            errno = 0;
-            memset(hamm_hist, 0, sizeof(hamm_hist));
-
             // Make sure networktables is working
             sanitycheckEntry.Set(counter);
             counter++;
 
-            if (has_depth)
-                depth.getFrame();
+            depth.getFrame();
             chrono::time_point frameTime = chrono::steady_clock::now();
-
-#ifdef hasTagCam
-            tagCam.getFrame();
-#endif
-
-            if (errno == EAGAIN)
-            {
-                printf("Unable to create the %d threads requested.\n", td->nthreads);
-                continue;
-            }
-
-            if (has_depth)
-            {
-                //if (see_cube_tags_Sub.Get())
-		if (false)
-                {
-                    std::vector<robot_position> poses =
-                        getPoses(depth.grayFrame, depth.colorFrame, &(depth.info), td);
-
-                    for (unsigned int i = 0; i < poses.size(); i++)
-                    {
-                        robot_position pos = poses[i];
-                        cout << "X: " << pos.x * INCH << endl;
-                        cout << "Y: " << pos.y * INCH << endl;
-                        cout << "Z: " << pos.z * INCH << endl << endl;
-                        cout << "Theta: " << pos.theta << endl;
-
-                        double micros = time_since(frameTime);
-                        vector<double> poseVector = {pos.x,     pos.y,  pos.z,
-                                                     pos.theta, micros, poseNum};
-                        cube_tag_Entry.Set(poseVector);
-                        nt_inst.Flush();
-                        poseNum++;
-                    }
-                }
-            }
-
-#ifdef hasTagCam
-            {
-                if (see_substation_tags_Sub.Get())
-                {
-                    std::vector<robot_position> poses =
-                        getPoses(tagCam.grayFrame, tagCam.colorFrame, &tagCam.info, td);
-
-                    for (unsigned int i = 0; i < poses.size(); i++)
-                    {
-                        robot_position pos = poses[i];
-                        cout << "X: " << pos.x * INCH << endl;
-                        cout << "Y: " << pos.y * INCH << endl;
-                        cout << "Z: " << pos.z * INCH << endl << endl;
-                        cout << "Theta: " << pos.theta << endl;
-
-                        double micros = time_since(frameTime);
-                        vector<double> poseVector = {pos.x,     pos.y,  pos.z,
-                                                     pos.theta, micros, poseNum};
-                        substation_tag_Entry.Set(poseVector);
-                        nt_inst.Flush();
-                        poseNum++;
-                    }
-                }
-#endif
-
             if (has_depth)
             {
                 // if (see_cones_Sub.Get())
@@ -344,54 +209,32 @@ int main()
                 }
             }
 
-            // Print & send pole info
-            /*
-            pair<double, double> polePos = depth.findPoles();
-            cout << "Pole X: " << polePos.first << endl;
-            cout << "Pole Y: " << polePos.second << endl;
-            ms = time_since(frameTime);
-            vector<double> poleVector = {polePos.first, polePos.second, ms, id}
-            pole_pos_Pub.Set(poleVector);
-            */
-
             nt_inst.Flush();
 
             // Graphics stuff
             // drawMargins(depth.colorFrame);
 
             // streamer
-            if (has_depth)
-            {
-                vector<uchar> buf_bgr;
-                imencode(".jpg", depth.colorFrame, buf_bgr, params);
-                streamer.publish("/colorFrame", string(buf_bgr.begin(), buf_bgr.end()));
-            }
+            vector<uchar> buf_bgr;
+            imencode(".jpg", depth.colorFrame, buf_bgr, params);
+            streamer.publish("/colorFrame", string(buf_bgr.begin(), buf_bgr.end()));
 
-#ifdef hasTagCam
-            {
-                vector<uchar> buf_tags;
-                imencode(".jpg", tagCam.colorFrame, buf_tags, params);
-                streamer.publish("/tagCam", string(buf_tags.begin(), buf_tags.end()));
-#endif
+            // Make sure each loop takes at least 10 ms (for streamer library)
+            auto loop_time = chrono::duration_cast<chrono::milliseconds>(
+                chrono::steady_clock::now() - loop_start);
+            if (loop_time.count() < 10)
+                this_thread::sleep_for(chrono::milliseconds(10 - loop_time.count()));
 
-                // Make sure each loop takes at least 10 ms (for streamer library)
-                auto loop_time = chrono::duration_cast<chrono::milliseconds>(
-                    chrono::steady_clock::now() - loop_start);
-                if (loop_time.count() < 10)
-                    this_thread::sleep_for(chrono::milliseconds(10 - loop_time.count()));
-            }
-
-            apriltag_detector_destroy(td);
-            tag16h5_destroy(tf);
             streamer.stop();
 
             return 0;
         }
+}
 
-        // Return time elapsed since passed time_point in microseconds
-        double time_since(std::chrono::time_point<std::chrono::steady_clock> start)
-        {
-            chrono::time_point end = chrono::steady_clock::now();
-            auto duration = chrono::duration_cast<chrono::microseconds>(end - start);
-            return (double)duration.count();
-        }
+ // Return time elapsed since passed time_point in microseconds
+double time_since(std::chrono::time_point<std::chrono::steady_clock> start)
+{
+     chrono::time_point end = chrono::steady_clock::now();
+     auto duration = chrono::duration_cast<chrono::microseconds>(end - start);
+     return (double)duration.count();
+}

@@ -50,8 +50,6 @@ realsense_incs = [
 
 vision_src = [
        'vision/main.cpp',
-       'vision/pose_estimation.cpp',
-       'vision/detection.cpp',
        'vision/Cameras.cpp',
        'vision/depthCamera.cpp',
        'vision/usbCamera.cpp',

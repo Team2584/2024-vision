@@ -58,7 +58,7 @@ int main()
     nt::NetworkTableInstance nt_inst = nt::NetworkTableInstance::GetDefault();
 
     // Setup networktable client
-    nt_inst.StartClient4("jetson client");
+    nt_inst.StartClient4("raspi vision client");
     nt_inst.SetServerTeam(2584);
     nt_inst.StartDSClient();
     nt_inst.SetServer("host", NT_DEFAULT_PORT4);
@@ -239,7 +239,7 @@ int main()
             if (!connectedSub.Get())
             {
                 printf("Reconnecting...\n");
-                nt_inst.StartClient4("jetson client");
+                nt_inst.StartClient4("raspi vision client");
                 nt_inst.SetServerTeam(2584);
                 nt_inst.StartDSClient();
                 nt_inst.SetServer("host", NT_DEFAULT_PORT4);

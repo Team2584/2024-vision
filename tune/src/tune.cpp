@@ -41,20 +41,12 @@ int main(void)
 
     streamer.start(5802);
 
-    int cone_min_hue;
-    int cone_max_hue;
-    int cone_min_sat;
-    int cone_max_sat;
-    int cone_min_val;
-    int cone_max_val;
-
-    int cube_min_hue;
-    int cube_max_hue;
-    int cube_min_sat;
-    int cube_max_sat;
-    int cube_min_val;
-    int cube_max_val;
-
+    int disk_min_hue;
+    int disk_max_hue;
+    int disk_min_sat;
+    int disk_max_sat;
+    int disk_min_val;
+    int disk_max_val;
 
     while (true)
     {
@@ -67,56 +59,32 @@ int main(void)
         GaussianBlur(colorFrame, colorFrame, Size(17, 17), 1.2, 1.2, BORDER_DEFAULT);
 
         // Get parameters
-        vector<int> coneParams;
+        vector<int> diskParams;
         vector<int> cubeParams;
 
         string line;
-        ifstream coneFile("/home/patriotrobotics/Documents/FRCCode/2024-vision/cone-params.txt");
+        ifstream diskFile("/home/patriotrobotics/Documents/FRCCode/2024-vision/disk-params.txt");
         for (int i = 0; i < 6; i++)
         {
-            if (coneFile)
-                getline(coneFile, line);
+            if (diskFile)
+                getline(diskFile, line);
             if (line != "")
-                coneParams.push_back(stoi(line));
+                diskParams.push_back(stoi(line));
         }
-        if (coneParams.size() > 0)
+        if (diskParams.size() > 0)
         {
-            cone_min_hue = coneParams[0];
-            cout << "cone_min_hue " << cone_min_hue << endl;
-            cone_max_hue = coneParams[1];
-            cout << "cone_max_hue " << cone_max_hue << endl;
-            cone_min_sat = coneParams[2];
-            cout << "cone_min_sat " << cone_min_sat << endl;
-            cone_max_sat = coneParams[3];
-            cout << "cone_max_sat " << cone_max_sat << endl;
-            cone_min_val = coneParams[4];
-            cout << "cone_min_val " << cone_min_val << endl;
-            cone_max_val = coneParams[5];
-            cout << "cone_max_val " << cone_max_val << endl << endl;
-        }
-
-        ifstream cubeFile("/home/patriotrobotics/Documents/FRCCode/2024-vision/cube-params.txt");
-        for (int i = 0; i < 6; i++)
-        {
-            if (coneFile)
-                getline(cubeFile, line);
-            if (line != "")
-                cubeParams.push_back(stoi(line));
-        }
-        if (cubeParams.size() > 0)
-        {
-            cube_min_hue = cubeParams[0];
-            cout << "cube_min_hue " << cube_min_hue << endl;
-            cube_max_hue = cubeParams[1];
-            cout << "cube_max_hue " << cube_max_hue << endl;
-            cube_min_sat = cubeParams[2];
-            cout << "cube_min_sat " << cube_min_sat << endl;
-            cube_max_sat = cubeParams[3];
-            cout << "cube_max_sat " << cube_max_sat << endl;
-            cube_min_val = cubeParams[4];
-            cout << "cube_min_val " << cube_min_val << endl;
-            cube_max_val = cubeParams[5];
-            cout << "cube_max_val " << cube_max_val << endl << endl << endl;
+            disk_min_hue = diskParams[0];
+            cout << "disk_min_hue " << disk_min_hue << endl;
+            disk_max_hue = diskParams[1];
+            cout << "disk_max_hue " << disk_max_hue << endl;
+            disk_min_sat = diskParams[2];
+            cout << "disk_min_sat " << disk_min_sat << endl;
+            disk_max_sat = diskParams[3];
+            cout << "disk_max_sat " << disk_max_sat << endl;
+            disk_min_val = diskParams[4];
+            cout << "disk_min_val " << disk_min_val << endl;
+            disk_max_val = diskParams[5];
+            cout << "disk_max_val " << disk_max_val << endl << endl;
         }
 
         Mat hsvFrame;
@@ -124,84 +92,48 @@ int main(void)
         Mat channels[3];
         split(hsvFrame, channels);
 
-        // Cone filtering
-        Mat coneHueMask;
-        inRange(channels[0], cone_min_hue, cone_max_hue, coneHueMask);
-        Mat coneSatMask;
-        inRange(channels[1], cone_min_sat, cone_max_sat, coneSatMask);
-        Mat coneValMask;
-        inRange(channels[2], cone_min_val, cone_max_val, coneValMask);
+        // Disk filtering
+        Mat diskHueMask;
+        inRange(channels[0], disk_min_hue, disk_max_hue, diskHueMask);
+        Mat diskSatMask;
+        inRange(channels[1], disk_min_sat, disk_max_sat, diskSatMask);
+        Mat diskValMask;
+        inRange(channels[2], disk_min_val, disk_max_val, diskValMask);
 
-        Mat coneMask;
-        bitwise_and(coneHueMask, coneSatMask, coneMask);
-        bitwise_and(coneMask, coneValMask, coneMask);
-        cvtColor(coneMask, coneMask, COLOR_GRAY2BGR);
+        Mat diskMask;
+        bitwise_and(diskHueMask, diskSatMask, diskMask);
+        bitwise_and(diskMask, diskValMask, diskMask);
+        cvtColor(diskMask, diskMask, COLOR_GRAY2BGR);
 
-        Mat justCone(Size(WIDTH, HEIGHT), CV_8UC1);
-        bitwise_and(colorFrame, coneMask, justCone);
-
-        // Cube filtering
-        Mat cubeHueMask;
-        inRange(channels[0], cube_min_hue, cube_max_hue, cubeHueMask);
-        Mat cubeSatMask;
-        inRange(channels[1], cube_min_sat, cube_max_sat, cubeSatMask);
-        Mat cubeValMask;
-        inRange(channels[2], cube_min_val, cube_max_val, cubeValMask);
-
-        Mat cubeMask;
-        bitwise_and(cubeHueMask, cubeSatMask, cubeMask);
-        bitwise_and(cubeMask, cubeValMask, cubeMask);
-        cvtColor(cubeMask, cubeMask, COLOR_GRAY2BGR);
-
-        Mat justCube(Size(WIDTH, HEIGHT), CV_8UC1);
-        bitwise_and(colorFrame, cubeMask, justCube);
+        Mat justDisk(Size(WIDTH, HEIGHT), CV_8UC1);
+        bitwise_and(colorFrame, diskMask, justDisk);
 
         // Stream all the images
         vector<uchar> buf_colorFrame;
         imencode(".jpg", colorFrame, buf_colorFrame, stream_params);
         streamer.publish("/colorFrame", string(buf_colorFrame.begin(), buf_colorFrame.end()));
 
-        vector<uchar> buf_coneValMask;
-        imencode(".jpg", coneValMask, buf_coneValMask, stream_params);
-        streamer.publish("/coneValMask", string(buf_coneValMask.begin(), buf_coneValMask.end()));
+        vector<uchar> buf_diskValMask;
+        imencode(".jpg", diskValMask, buf_diskValMask, stream_params);
+        streamer.publish("/diskValMask", string(buf_diskValMask.begin(), buf_diskValMask.end()));
 
-        vector<uchar> buf_coneHueMask;
-        imencode(".jpg", coneHueMask, buf_coneHueMask, stream_params);
-        streamer.publish("/coneHueMask", string(buf_coneHueMask.begin(), buf_coneHueMask.end()));
+        vector<uchar> buf_diskHueMask;
+        imencode(".jpg", diskHueMask, buf_diskHueMask, stream_params);
+        streamer.publish("/diskHueMask", string(buf_diskHueMask.begin(), buf_diskHueMask.end()));
 
-        vector<uchar> buf_coneSatMask;
-        imencode(".jpg", coneSatMask, buf_coneSatMask, stream_params);
-        streamer.publish("/coneSatMask", string(buf_coneSatMask.begin(), buf_coneSatMask.end()));
+        vector<uchar> buf_diskSatMask;
+        imencode(".jpg", diskSatMask, buf_diskSatMask, stream_params);
+        streamer.publish("/diskSatMask", string(buf_diskSatMask.begin(), buf_diskSatMask.end()));
 
-        vector<uchar> buf_justCone;
-        imencode(".jpg", justCone, buf_justCone, stream_params);
-        streamer.publish("/justCone", string(buf_justCone.begin(), buf_justCone.end()));
-
-        vector<uchar> buf_cubeHueMask;
-        imencode(".jpg", cubeHueMask, buf_cubeHueMask, stream_params);
-        streamer.publish("/cubeHueMask", string(buf_cubeHueMask.begin(), buf_cubeHueMask.end()));
-
-        vector<uchar> buf_cubeSatMask;
-        imencode(".jpg", cubeSatMask, buf_cubeSatMask, stream_params);
-        streamer.publish("/cubeSatMask", string(buf_cubeSatMask.begin(), buf_cubeSatMask.end()));
-
-        vector<uchar> buf_cubeValMask;
-        imencode(".jpg", cubeValMask, buf_cubeValMask, stream_params);
-        streamer.publish("/cubeValMask", string(buf_cubeValMask.begin(), buf_cubeValMask.end()));
-
-        vector<uchar> buf_justCube;
-        imencode(".jpg", justCube, buf_justCube, stream_params);
-        streamer.publish("/justCube", string(buf_justCube.begin(), buf_justCube.end()));
+        vector<uchar> buf_justDisk;
+        imencode(".jpg", justDisk, buf_justDisk, stream_params);
+        streamer.publish("/justDisk", string(buf_justDisk.begin(), buf_justDisk.end()));
 
         colorFrame.release();
         hsvFrame.release();
-        coneHueMask.release();
-        coneValMask.release();
-        coneSatMask.release();
-        cubeHueMask.release();
-        cubeValMask.release();
-        cubeSatMask.release();
-        justCone.release();
-        justCube.release();
+        diskHueMask.release();
+        diskValMask.release();
+        diskSatMask.release();
+        justDisk.release();
     }
 }

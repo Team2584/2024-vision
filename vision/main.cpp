@@ -7,22 +7,14 @@ using namespace std;
 using namespace cv;
 using mjpgs = nadjieb::MJPEGStreamer;
 
-int cone_min_hue;
-int cone_max_hue;
-int cone_min_sat;
-int cone_max_sat;
-int cone_min_val;
-int cone_max_val;
+int disk_min_hue;
+int disk_max_hue;
+int disk_min_sat;
+int disk_max_sat;
+int disk_min_val;
+int disk_max_val;
 
-int cube_min_hue;
-int cube_max_hue;
-int cube_min_sat;
-int cube_max_sat;
-int cube_min_val;
-int cube_max_val;
-
-bool has_depth = true;
-bool has_tagCam = false;
+bool found_camera = true;
 
 int main()
 {
@@ -52,21 +44,14 @@ int main()
     nt::BooleanTopic connectedTopic = visionTbl->GetBooleanTopic("connected");
     nt::BooleanSubscriber connectedSub = connectedTopic.Subscribe(false);
 
-    // Other vision topics
-    nt::BooleanTopic see_cones_Topic = visionTbl->GetBooleanTopic("seeCones");
-    nt::BooleanSubscriber see_cones_Sub = see_cones_Topic.Subscribe({true});
-
-    nt::BooleanTopic see_cubes_Topic = visionTbl->GetBooleanTopic("seeCubes");
-    nt::BooleanSubscriber see_cubes_Sub = see_cubes_Topic.Subscribe({true});
-
+    // Info from Roborio
     nt::BooleanTopic in_match_Topic = visionTbl->GetBooleanTopic("inMatch");
     nt::BooleanSubscriber in_match_Sub = in_match_Topic.Subscribe({false});
 
-    nt::DoubleArrayTopic cone_pos_Topic = visionTbl->GetDoubleArrayTopic("conePos");
-    nt::DoubleArrayPublisher cone_pos_Pub = cone_pos_Topic.Publish();
 
-    nt::DoubleArrayTopic cube_pos_Topic = visionTbl->GetDoubleArrayTopic("cubePos");
-    nt::DoubleArrayPublisher cube_pos_Pub = cube_pos_Topic.Publish();
+    // Vision topics
+    nt::DoubleArrayTopic disk_pos_Topic = visionTbl->GetDoubleArrayTopic("diskPos");
+    nt::DoubleArrayPublisher disk_pos_Pub = disk_pos_Topic.Publish();
 
     /**********************************************************************************************
      * Camera & Stream Setup *
@@ -86,7 +71,7 @@ int main()
             return (7);
         }
         cout << "RS2 ERROR CAUGHT: " << err.what() << endl;
-        has_depth = false;
+        found_camera = false;
     }
     */
 
@@ -103,63 +88,38 @@ int main()
     /**********************************************************************************************
     * GET FILTER PARAMETERS FROM FILE *
     *************************/
-    vector<int> coneParams;
-    vector<int> cubeParams;
+    vector<int> diskParams;
 
-        string line;
-        ifstream coneFile("/home/patriotrobotics/Documents/FRCCode/2024-vision/cone-params.txt");
-        for (int i = 0; i < 6; i++)
-        {
-            if (coneFile)
-                getline(coneFile, line);
-            if (line != "")
-                coneParams.push_back(stoi(line));
-        }
-        if (coneParams.size() > 0)
-        {
-            cone_min_hue = coneParams[0];
-            cout << "cone_min_hue " << cone_min_hue << endl;
-            cone_max_hue = coneParams[1];
-            cout << "cone_max_hue " << cone_max_hue << endl;
-            cone_min_sat = coneParams[2];
-            cout << "cone_min_sat " << cone_min_sat << endl;
-            cone_max_sat = coneParams[3];
-            cout << "cone_max_sat " << cone_max_sat << endl;
-            cone_min_val = coneParams[4];
-            cout << "cone_min_val " << cone_min_val << endl;
-            cone_max_val = coneParams[5];
-            cout << "cone_max_val " << cone_max_val << endl << endl;
-        }
+    string line;
+    ifstream diskFile("/home/patriotrobotics/Documents/FRCCode/2024-vision/disk-params.txt");
+    for (int i = 0; i < 6; i++)
+    {
+    if (diskFile)
+        getline(diskFile, line);
+    if (line != "")
+        diskParams.push_back(stoi(line));
+    }
+    if (diskParams.size() > 0)
+    {
+        disk_min_hue = diskParams[0];
+        cout << "disk_min_hue " << disk_min_hue << endl;
+        disk_max_hue = diskParams[1];
+        cout << "disk_max_hue " << disk_max_hue << endl;
+        disk_min_sat = diskParams[2];
+        cout << "disk_min_sat " << disk_min_sat << endl;
+        disk_max_sat = diskParams[3];
+        cout << "disk_max_sat " << disk_max_sat << endl;
+        disk_min_val = diskParams[4];
+        cout << "disk_min_val " << disk_min_val << endl;
+        disk_max_val = diskParams[5];
+        cout << "disk_max_val " << disk_max_val << endl << endl;
+    }
 
-        ifstream cubeFile("/home/patriotrobotics/Documents/FRCCode/2024-vision/cube-params.txt");
-        for (int i = 0; i < 6; i++)
-        {
-            if (coneFile)
-                getline(cubeFile, line);
-            if (line != "")
-                cubeParams.push_back(stoi(line));
-        }
-        if (cubeParams.size() > 0)
-        {
-            cube_min_hue = cubeParams[0];
-            cout << "cube_min_hue " << cube_min_hue << endl;
-            cube_max_hue = cubeParams[1];
-            cout << "cube_max_hue " << cube_max_hue << endl;
-            cube_min_sat = cubeParams[2];
-            cout << "cube_min_sat " << cube_min_sat << endl;
-            cube_max_sat = cubeParams[3];
-            cout << "cube_max_sat " << cube_max_sat << endl;
-            cube_min_val = cubeParams[4];
-            cout << "cube_min_val " << cube_min_val << endl;
-            cube_max_val = cubeParams[5];
-            cout << "cube_max_val " << cube_max_val << endl << endl << endl;
-        }
-
-        /**********************************************************************************************
+            /**********************************************************************************************
          * THE LOOP *
          ************/
         int counter = 2;
-        double coneNum = 0;
+        double diskNum = 0;
 
         while (true)
         {
@@ -180,31 +140,15 @@ int main()
 
             depth.getFrame();
             chrono::time_point frameTime = chrono::steady_clock::now();
-            if (has_depth)
+            if (found_camera)
             {
-                // if (see_cones_Sub.Get())
-		if (true)
-                {
-                    // Print & send cone info
-                    pair<double, double> conePos = depth.findCones();
-                    cout << "Cone X: " << conePos.first << endl;
-                    cout << "Cone Y: " << conePos.second << endl;
+                    // Print & send disk info
+                    pair<double, double> diskPos = depth.findDisks();
+                    cout << "Disk X: " << diskPos.first << endl;
+                    cout << "Disk Y: " << diskPos.second << endl;
                     double micros = time_since(frameTime);
-                    vector<double> coneVector = {conePos.first, conePos.second, micros, coneNum};
-                    cone_pos_Pub.Set(coneVector);
-                }
-
-                // if (see_cubes_Sub.Get())
-		if (false)
-                {
-                    // Print & send cube info
-                    pair<double, double> cubePos = depth.findCubes();
-                    cout << "Cube X: " << cubePos.first << endl;
-                    cout << "Cube Y: " << cubePos.second << endl << endl;
-                    double micros = time_since(frameTime);
-                    vector<double> cubeVector = {cubePos.first, cubePos.second, micros, coneNum};
-                    cube_pos_Pub.Set(cubeVector);
-                }
+                    vector<double> diskVector = {diskPos.first, diskPos.second, micros, diskNum};
+                    disk_pos_Pub.Set(diskVector);
             }
 
             nt_inst.Flush();

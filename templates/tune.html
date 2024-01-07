@@ -1,11 +1,11 @@
 {% extends "layout.html" %}
 
-{% block title %} Vision Tuning: Cones {% endblock %}
+{% block title %} Vision Tuning: Disks {% endblock %}
 
 {% block body %}
 
 <a class="mt-1 ms-1 float-start btn btn-primary" href="/loading/home">Go Back</a>
-<h1><center>Cone Tuner</center></h1>
+<h1><center>Disk Tuner</center></h1>
 <style>
     .top_column {
         float: left;
@@ -45,11 +45,11 @@
         />
     </div>
     <div class="top_column">
-        <h2><center>Only Cone</center></h2>
+        <h2><center>Only Disk</center></h2>
         <br />
         <img
             class="original_image"
-            src="http://{{ip}}:5802/justCone"
+            src="http://{{ip}}:5802/justDisk"
             alt="Full_Image"
             width="320"
             height="240"
@@ -62,7 +62,7 @@
     <div class="bottom_column">
         <img
             class="original_image"
-            src="http://{{ip}}:5802/coneHueMask"
+            src="http://{{ip}}:5802/diskHueMask"
             alt="Full_Image"
             width="320"
             height="240"
@@ -74,7 +74,7 @@
     <div class="bottom_column">
         <img
             class="original_image"
-            src="http://{{ip}}:5802/coneSatMask"
+            src="http://{{ip}}:5802/diskSatMask"
             alt="Full_Image"
             width="320"
             height="240"
@@ -86,7 +86,7 @@
     <div class="bottom_column">
         <img
             class="original_image"
-            src="http://{{ip}}:5802/coneValMask"
+            src="http://{{ip}}:5802/diskValMask"
             alt="Full_Image"
             width="320"
             height="240"
@@ -160,7 +160,7 @@
 
     function sendVals()
     {
-      fetch("{{url_for("send_cones")}}", {
+      fetch("{{url_for("send_tune")}}", {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

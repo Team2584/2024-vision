@@ -31,44 +31,30 @@ def default_page():
 @app.route("/tune")
 def tune():
     set_mode("tune")
-    return render_template("tune-select.html", mode = get_mode(), ip = ip_addr);
+ 
+    with open("disk-params.txt", "r") as f:
+        params = f.readlines();
+
+    return render_template("tune.html", hue_min = params[0],
+                                        hue_max = params[1],
+                                        sat_min = params[2],
+                                        sat_max = params[3],
+                                        val_min = params[4],
+                                        val_max = params[5],
+                                        mode = get_mode(),
+                                        ip = ip_addr)
 
 @app.route("/loading/<page>")
 def loading_tune(page):
     if (page == "restart"):
         set_mode("restart")
         return render_template("loading.html"), {"Refresh": f"{delay_time}; url=http://{ip_addr}:{port}/"}
-    elif (page == "tune-cone"):
+    elif (page == "tune"):
         set_mode("tune")
-        return render_template("loading.html"), {"Refresh": f"{delay_time}; url=http://{ip_addr}:{port}/tune/cone"}
-    elif (page == "tune-cube"):
-        set_mode("tune")
-        return render_template("loading.html"), {"Refresh": f"{delay_time}; url=http://{ip_addr}:{port}/tune/cube"}
+        return render_template("loading.html"), {"Refresh": f"{delay_time}; url=http://{ip_addr}:{port}/tune"}
     else:
         set_mode("run")
         return render_template("loading.html"), {"Refresh": f"{delay_time}; url=http://{ip_addr}:{port}/"}
-
-@app.route("/tune/<page>")
-def cones_or_cubes(page):
-    if not page == "cone" and not page == "cube":
-        return redirect("/")
-
-    set_mode("tune")
-
-    filename = page + "-params.txt"
-
-    with open(filename, "r") as f:
-        params = f.readlines();
-
-    html_page = page + ".html"
-    return render_template(html_page, hue_min = params[0],
-                                      hue_max = params[1],
-                                      sat_min = params[2],
-                                      sat_max = params[3],
-                                      val_min = params[4],
-                                      val_max = params[5],
-                                      mode = get_mode(),
-                                      ip = ip_addr)
 
 @app.route("/restart", methods=['POST'])
 def restart_code():
@@ -83,19 +69,10 @@ def runvision():
     set_mode("run")
     return {'did': True}
 
-@app.route("/send-cones", methods=['POST'])
-def send_cones():
+@app.route("/send-tune", methods=['POST'])
+def send_tune():
     data = request.json
-    with open("cone-params.txt", "w") as f:
-        for item in data.values():
-            f.write(item)
-            f.write("\n")
-    return {'did': True}
-
-@app.route("/send-cubes", methods=['POST'])
-def send_cubes():
-    data = request.json
-    with open("cube-params.txt", "w") as f:
+    with open("disk-params.txt", "w") as f:
         for item in data.values():
             f.write(item)
             f.write("\n")

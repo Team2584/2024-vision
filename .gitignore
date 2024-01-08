@@ -3,7 +3,6 @@ build/
 .cache/
 __pycache__/
 mode
-cone-params.txt
-cube-params.txt
+ring-params.txt
 .DS_Store
 .swp

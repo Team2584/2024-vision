@@ -41,12 +41,12 @@ int main(void)
 
     streamer.start(5802);
 
-    int disk_min_hue;
-    int disk_max_hue;
-    int disk_min_sat;
-    int disk_max_sat;
-    int disk_min_val;
-    int disk_max_val;
+    int ring_min_hue;
+    int ring_max_hue;
+    int ring_min_sat;
+    int ring_max_sat;
+    int ring_min_val;
+    int ring_max_val;
 
     while (true)
     {
@@ -59,32 +59,32 @@ int main(void)
         GaussianBlur(colorFrame, colorFrame, Size(17, 17), 1.2, 1.2, BORDER_DEFAULT);
 
         // Get parameters
-        vector<int> diskParams;
+        vector<int> ringParams;
         vector<int> cubeParams;
 
         string line;
-        ifstream diskFile("/home/patriotrobotics/Documents/FRCCode/2024-vision/disk-params.txt");
+        ifstream ringFile("/home/patriotrobotics/Documents/FRCCode/2024-vision/ring-params.txt");
         for (int i = 0; i < 6; i++)
         {
-            if (diskFile)
-                getline(diskFile, line);
+            if (ringFile)
+                getline(ringFile, line);
             if (line != "")
-                diskParams.push_back(stoi(line));
+                ringParams.push_back(stoi(line));
         }
-        if (diskParams.size() > 0)
+        if (ringParams.size() > 0)
         {
-            disk_min_hue = diskParams[0];
-            cout << "disk_min_hue " << disk_min_hue << endl;
-            disk_max_hue = diskParams[1];
-            cout << "disk_max_hue " << disk_max_hue << endl;
-            disk_min_sat = diskParams[2];
-            cout << "disk_min_sat " << disk_min_sat << endl;
-            disk_max_sat = diskParams[3];
-            cout << "disk_max_sat " << disk_max_sat << endl;
-            disk_min_val = diskParams[4];
-            cout << "disk_min_val " << disk_min_val << endl;
-            disk_max_val = diskParams[5];
-            cout << "disk_max_val " << disk_max_val << endl << endl;
+            ring_min_hue = ringParams[0];
+            cout << "ring_min_hue " << ring_min_hue << endl;
+            ring_max_hue = ringParams[1];
+            cout << "ring_max_hue " << ring_max_hue << endl;
+            ring_min_sat = ringParams[2];
+            cout << "ring_min_sat " << ring_min_sat << endl;
+            ring_max_sat = ringParams[3];
+            cout << "ring_max_sat " << ring_max_sat << endl;
+            ring_min_val = ringParams[4];
+            cout << "ring_min_val " << ring_min_val << endl;
+            ring_max_val = ringParams[5];
+            cout << "ring_max_val " << ring_max_val << endl << endl;
         }
 
         Mat hsvFrame;
@@ -92,48 +92,48 @@ int main(void)
         Mat channels[3];
         split(hsvFrame, channels);
 
-        // Disk filtering
-        Mat diskHueMask;
-        inRange(channels[0], disk_min_hue, disk_max_hue, diskHueMask);
-        Mat diskSatMask;
-        inRange(channels[1], disk_min_sat, disk_max_sat, diskSatMask);
-        Mat diskValMask;
-        inRange(channels[2], disk_min_val, disk_max_val, diskValMask);
+        // Ring filtering
+        Mat ringHueMask;
+        inRange(channels[0], ring_min_hue, ring_max_hue, ringHueMask);
+        Mat ringSatMask;
+        inRange(channels[1], ring_min_sat, ring_max_sat, ringSatMask);
+        Mat ringValMask;
+        inRange(channels[2], ring_min_val, ring_max_val, ringValMask);
 
-        Mat diskMask;
-        bitwise_and(diskHueMask, diskSatMask, diskMask);
-        bitwise_and(diskMask, diskValMask, diskMask);
-        cvtColor(diskMask, diskMask, COLOR_GRAY2BGR);
+        Mat ringMask;
+        bitwise_and(ringHueMask, ringSatMask, ringMask);
+        bitwise_and(ringMask, ringValMask, ringMask);
+        cvtColor(ringMask, ringMask, COLOR_GRAY2BGR);
 
-        Mat justDisk(Size(WIDTH, HEIGHT), CV_8UC1);
-        bitwise_and(colorFrame, diskMask, justDisk);
+        Mat justRing(Size(WIDTH, HEIGHT), CV_8UC1);
+        bitwise_and(colorFrame, ringMask, justRing);
 
         // Stream all the images
         vector<uchar> buf_colorFrame;
         imencode(".jpg", colorFrame, buf_colorFrame, stream_params);
         streamer.publish("/colorFrame", string(buf_colorFrame.begin(), buf_colorFrame.end()));
 
-        vector<uchar> buf_diskValMask;
-        imencode(".jpg", diskValMask, buf_diskValMask, stream_params);
-        streamer.publish("/diskValMask", string(buf_diskValMask.begin(), buf_diskValMask.end()));
+        vector<uchar> buf_ringValMask;
+        imencode(".jpg", ringValMask, buf_ringValMask, stream_params);
+        streamer.publish("/ringValMask", string(buf_ringValMask.begin(), buf_ringValMask.end()));
 
-        vector<uchar> buf_diskHueMask;
-        imencode(".jpg", diskHueMask, buf_diskHueMask, stream_params);
-        streamer.publish("/diskHueMask", string(buf_diskHueMask.begin(), buf_diskHueMask.end()));
+        vector<uchar> buf_ringHueMask;
+        imencode(".jpg", ringHueMask, buf_ringHueMask, stream_params);
+        streamer.publish("/ringHueMask", string(buf_ringHueMask.begin(), buf_ringHueMask.end()));
 
-        vector<uchar> buf_diskSatMask;
-        imencode(".jpg", diskSatMask, buf_diskSatMask, stream_params);
-        streamer.publish("/diskSatMask", string(buf_diskSatMask.begin(), buf_diskSatMask.end()));
+        vector<uchar> buf_ringSatMask;
+        imencode(".jpg", ringSatMask, buf_ringSatMask, stream_params);
+        streamer.publish("/ringSatMask", string(buf_ringSatMask.begin(), buf_ringSatMask.end()));
 
-        vector<uchar> buf_justDisk;
-        imencode(".jpg", justDisk, buf_justDisk, stream_params);
-        streamer.publish("/justDisk", string(buf_justDisk.begin(), buf_justDisk.end()));
+        vector<uchar> buf_justRing;
+        imencode(".jpg", justRing, buf_justRing, stream_params);
+        streamer.publish("/justRing", string(buf_justRing.begin(), buf_justRing.end()));
 
         colorFrame.release();
         hsvFrame.release();
-        diskHueMask.release();
-        diskValMask.release();
-        diskSatMask.release();
-        justDisk.release();
+        ringHueMask.release();
+        ringValMask.release();
+        ringSatMask.release();
+        justRing.release();
     }
 }

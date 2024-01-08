@@ -7,12 +7,12 @@ using namespace std;
 using namespace cv;
 using mjpgs = nadjieb::MJPEGStreamer;
 
-int disk_min_hue;
-int disk_max_hue;
-int disk_min_sat;
-int disk_max_sat;
-int disk_min_val;
-int disk_max_val;
+int ring_min_hue;
+int ring_max_hue;
+int ring_min_sat;
+int ring_max_sat;
+int ring_min_val;
+int ring_max_val;
 
 bool found_camera = true;
 
@@ -50,8 +50,8 @@ int main()
 
 
     // Vision topics
-    nt::DoubleArrayTopic disk_pos_Topic = visionTbl->GetDoubleArrayTopic("diskPos");
-    nt::DoubleArrayPublisher disk_pos_Pub = disk_pos_Topic.Publish();
+    nt::DoubleArrayTopic ring_pos_Topic = visionTbl->GetDoubleArrayTopic("ringPos");
+    nt::DoubleArrayPublisher ring_pos_Pub = ring_pos_Topic.Publish();
 
     /**********************************************************************************************
      * Camera & Stream Setup *
@@ -88,38 +88,38 @@ int main()
     /**********************************************************************************************
     * GET FILTER PARAMETERS FROM FILE *
     *************************/
-    vector<int> diskParams;
+    vector<int> ringParams;
 
     string line;
-    ifstream diskFile("/home/patriotrobotics/Documents/FRCCode/2024-vision/disk-params.txt");
+    ifstream ringFile("/home/patriotrobotics/Documents/FRCCode/2024-vision/ring-params.txt");
     for (int i = 0; i < 6; i++)
     {
-    if (diskFile)
-        getline(diskFile, line);
+    if (ringFile)
+        getline(ringFile, line);
     if (line != "")
-        diskParams.push_back(stoi(line));
+        ringParams.push_back(stoi(line));
     }
-    if (diskParams.size() > 0)
+    if (ringParams.size() > 0)
     {
-        disk_min_hue = diskParams[0];
-        cout << "disk_min_hue " << disk_min_hue << endl;
-        disk_max_hue = diskParams[1];
-        cout << "disk_max_hue " << disk_max_hue << endl;
-        disk_min_sat = diskParams[2];
-        cout << "disk_min_sat " << disk_min_sat << endl;
-        disk_max_sat = diskParams[3];
-        cout << "disk_max_sat " << disk_max_sat << endl;
-        disk_min_val = diskParams[4];
-        cout << "disk_min_val " << disk_min_val << endl;
-        disk_max_val = diskParams[5];
-        cout << "disk_max_val " << disk_max_val << endl << endl;
+        ring_min_hue = ringParams[0];
+        cout << "ring_min_hue " << ring_min_hue << endl;
+        ring_max_hue = ringParams[1];
+        cout << "ring_max_hue " << ring_max_hue << endl;
+        ring_min_sat = ringParams[2];
+        cout << "ring_min_sat " << ring_min_sat << endl;
+        ring_max_sat = ringParams[3];
+        cout << "ring_max_sat " << ring_max_sat << endl;
+        ring_min_val = ringParams[4];
+        cout << "ring_min_val " << ring_min_val << endl;
+        ring_max_val = ringParams[5];
+        cout << "ring_max_val " << ring_max_val << endl << endl;
     }
 
             /**********************************************************************************************
          * THE LOOP *
          ************/
         int counter = 2;
-        double diskNum = 0;
+        double ringNum = 0;
 
         while (true)
         {
@@ -142,13 +142,13 @@ int main()
             chrono::time_point frameTime = chrono::steady_clock::now();
             if (found_camera)
             {
-                    // Print & send disk info
-                    pair<double, double> diskPos = depth.findDisks();
-                    cout << "Disk X: " << diskPos.first << endl;
-                    cout << "Disk Y: " << diskPos.second << endl;
+                    // Print & send ring info
+                    pair<double, double> ringPos = depth.findRings();
+                    cout << "Ring X: " << ringPos.first << endl;
+                    cout << "Ring Y: " << ringPos.second << endl;
                     double micros = time_since(frameTime);
-                    vector<double> diskVector = {diskPos.first, diskPos.second, micros, diskNum};
-                    disk_pos_Pub.Set(diskVector);
+                    vector<double> ringVector = {ringPos.first, ringPos.second, micros, ringNum};
+                    ring_pos_Pub.Set(ringVector);
             }
 
             nt_inst.Flush();

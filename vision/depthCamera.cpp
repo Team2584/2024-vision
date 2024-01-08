@@ -68,7 +68,7 @@ void depthCamera::getFrame()
     depthUnit = rs_depthFrame.get_units();
 }
 
-bool isDisk(vector<Point> contour, Rect boundBox, int width, int height)
+bool isRing(vector<Point> contour, Rect boundBox, int width, int height)
 {
     // Discard small detections
     if (boundBox.width < 10 || boundBox.height < 10)
@@ -92,7 +92,7 @@ bool isDisk(vector<Point> contour, Rect boundBox, int width, int height)
 
 double getObjectDepth(vector<Point> objContour, Mat depths)
 {
-    // Get depth by averaging depths of an eroded disk mask
+    // Get depth by averaging depths of an eroded ring mask
     Mat objMask = Mat::zeros(Size(depths.cols, depths.rows), CV_8UC1);
     drawContours(objMask, vector<vector<Point>>(1, objContour), -1, 255, -1);
     Mat kernel = getStructuringElement(MORPH_RECT, Size(5, 5));
@@ -110,32 +110,32 @@ double getObjectDepth(vector<Point> objContour, Mat depths)
     return depth;
 }
 
-std::pair<double, double> depthCamera::findDisks()
+std::pair<double, double> depthCamera::findRings()
 {
     Mat hsvFrame;
     GaussianBlur(this->colorFrame, hsvFrame, Size(17, 17), 1.2, 1.2, BORDER_DEFAULT);
     cvtColor(colorFrame, hsvFrame, COLOR_BGR2HSV);
 
     Mat mask;
-    inRange(hsvFrame, Scalar(disk_min_hue, disk_min_sat, disk_min_val),
-            Scalar(disk_max_hue, disk_max_sat, disk_max_val), mask);
+    inRange(hsvFrame, Scalar(ring_min_hue, ring_min_sat, ring_min_val),
+            Scalar(ring_max_hue, ring_max_sat, ring_max_val), mask);
 
-    // Get contours of disks
+    // Get contours of rings
     vector<vector<Point>> contours;
     vector<Vec4i> hierarchy;
     findContours(mask, contours, hierarchy, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
 
     // Show contours & bounding boxes
     vector<Rect> boundBoxes;
-    vector<vector<Point>> diskContours;
+    vector<vector<Point>> ringContours;
     for (unsigned int i = 0; i < contours.size(); i++)
     {
         Rect boundBox = boundingRect(contours[i]);
-        if (isDisk(contours[i], boundBox, width, height))
+        if (isRing(contours[i], boundBox, width, height))
         {
             drawContours(colorFrame, contours, i, Scalar(0, 255, 255), 2);
             rectangle(colorFrame, boundBox, Scalar(255, 255, 255), 1);
-            diskContours.push_back(contours[i]);
+            ringContours.push_back(contours[i]);
             boundBoxes.push_back(boundBox);
         }
     }
@@ -143,10 +143,10 @@ std::pair<double, double> depthCamera::findDisks()
     if (boundBoxes.size() == 0)
         return pair(0, 0);
 
-    // Pick the lowest (closest) disk
+    // Pick the lowest (closest) ring
     int height = 0;
     int selected = 0;
-    for (unsigned int i = 0; i < diskContours.size(); i++)
+    for (unsigned int i = 0; i < ringContours.size(); i++)
     {
         int newHeight = boundBoxes[i].height;
         if (newHeight > height) // because y is increasing down
@@ -156,7 +156,7 @@ std::pair<double, double> depthCamera::findDisks()
         }
     }
 
-    vector<Point> bestContour = diskContours[selected];
+    vector<Point> bestContour = ringContours[selected];
     double bestDist = getObjectDepth(bestContour, depthFrame) * depthUnit;
     drawContours(colorFrame, vector<vector<Point>>(1, bestContour), -1, Scalar(0, 255, 0), 7);
 
@@ -200,9 +200,9 @@ std::pair<double, double> depthCamera::findDisks()
     y = pos(1) + info.offset.y;
     z = pos(2) + info.offset.z;
 
-    // cout << "Disk X: " << x << endl;
-    // cout << "Disk Y: " << y << endl;
-    // cout << "Disk Z: " << z << endl;
+    // cout << "Ring X: " << x << endl;
+    // cout << "Ring Y: " << y << endl;
+    // cout << "Ring Z: " << z << endl;
 
     return pair(x, y);
 }

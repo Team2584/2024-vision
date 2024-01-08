@@ -1,11 +1,11 @@
 {% extends "layout.html" %}
 
-{% block title %} Vision Tuning: Disks {% endblock %}
+{% block title %} Vision Tuning: Rings {% endblock %}
 
 {% block body %}
 
 <a class="mt-1 ms-1 float-start btn btn-primary" href="/loading/home">Go Back</a>
-<h1><center>Disk Tuner</center></h1>
+<h1><center>Ring Tuner</center></h1>
 <style>
     .top_column {
         float: left;
@@ -45,11 +45,11 @@
         />
     </div>
     <div class="top_column">
-        <h2><center>Only Disk</center></h2>
+        <h2><center>Only Ring</center></h2>
         <br />
         <img
             class="original_image"
-            src="http://{{ip}}:5802/justDisk"
+            src="http://{{ip}}:5802/justRing"
             alt="Full_Image"
             width="320"
             height="240"
@@ -62,7 +62,7 @@
     <div class="bottom_column">
         <img
             class="original_image"
-            src="http://{{ip}}:5802/diskHueMask"
+            src="http://{{ip}}:5802/ringHueMask"
             alt="Full_Image"
             width="320"
             height="240"
@@ -74,7 +74,7 @@
     <div class="bottom_column">
         <img
             class="original_image"
-            src="http://{{ip}}:5802/diskSatMask"
+            src="http://{{ip}}:5802/ringSatMask"
             alt="Full_Image"
             width="320"
             height="240"
@@ -86,7 +86,7 @@
     <div class="bottom_column">
         <img
             class="original_image"
-            src="http://{{ip}}:5802/diskValMask"
+            src="http://{{ip}}:5802/ringValMask"
             alt="Full_Image"
             width="320"
             height="240"

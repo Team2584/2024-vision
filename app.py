@@ -32,7 +32,7 @@ def default_page():
 def tune():
     set_mode("tune")
  
-    with open("disk-params.txt", "r") as f:
+    with open("ring-params.txt", "r") as f:
         params = f.readlines();
 
     return render_template("tune.html", hue_min = params[0],
@@ -72,7 +72,7 @@ def runvision():
 @app.route("/send-tune", methods=['POST'])
 def send_tune():
     data = request.json
-    with open("disk-params.txt", "w") as f:
+    with open("ring-params.txt", "w") as f:
         for item in data.values():
             f.write(item)
             f.write("\n")

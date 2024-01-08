@@ -97,7 +97,7 @@ class depthCamera : public abstractCamera
     void setAutoExposure();
     void setLaser(bool on);
     void getFrame();
-    std::pair<double, double> findDisks();
+    std::pair<double, double> findRings();
 };
 
 class usbCamera : public abstractCamera

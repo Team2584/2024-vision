@@ -114,7 +114,7 @@ std::pair<double, double> depthCamera::findRings()
 {
     Mat hsvFrame;
     GaussianBlur(this->colorFrame, hsvFrame, Size(17, 17), 1.2, 1.2, BORDER_DEFAULT);
-    cvtColor(colorFrame, hsvFrame, COLOR_BGR2HSV);
+    cvtColor(hsvFrame, hsvFrame, COLOR_BGR2HSV);
 
     Mat mask;
     inRange(hsvFrame, Scalar(ring_min_hue, ring_min_sat, ring_min_val),
